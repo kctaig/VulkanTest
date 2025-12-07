@@ -16,6 +16,7 @@
 #include <set>
 #include <stdexcept>
 #include <vector>
+#include <filesystem>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -618,8 +619,8 @@ class HelloTriangleApplication {
     }
 
     void createGraphicsPipeline() {
-        auto vertShaderCode = readFile("../../shaders/vert.spv");
-        auto fragShaderCode = readFile("../../shaders/frag.spv");
+        auto vertShaderCode = readFile("../shaders/vert.spv");
+        auto fragShaderCode = readFile("../shaders/frag.spv");
 
         VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
         VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
@@ -873,7 +874,7 @@ class HelloTriangleApplication {
 
     void createTextureImage() {
         int texWidth, texHeight, texChannels;
-        stbi_uc* pixels = stbi_load("../../textures/texture.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        stbi_uc* pixels = stbi_load(getAbsPath("../textures/texture.jpg").string().c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         if (!pixels) {
             throw std::runtime_error("failed to load texture image!");
         }
@@ -1606,8 +1607,21 @@ class HelloTriangleApplication {
         return true;
     }
 
+    static std::filesystem::path getAbsPath(const std::string& filename){
+        namespace fs = std::filesystem;
+        fs::path pathIn(filename);
+        if (pathIn.is_relative()) {
+            fs::path srcDir = fs::path(__FILE__).parent_path();
+            pathIn = fs::absolute( srcDir/ filename);
+        } else {
+            pathIn = fs::absolute(pathIn);
+        }
+        return pathIn;
+    }
+
     static std::vector<char> readFile(const std::string& filename) {
-        std::ifstream file(filename, std::ios::ate | std::ios::binary);
+        std::filesystem::path absFilePath = getAbsPath(filename);
+        std::ifstream file(absFilePath, std::ios::ate | std::ios::binary);
         if (!file.is_open()) {
             throw std::runtime_error("failed to open file");
         }
